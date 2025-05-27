@@ -18,3 +18,7 @@ build: deps
 .PHONY: publish # Publish package
 publish: clean build
 	uv publish
+
+.PHONY: run # Run the program
+run:
+	uv run python hold_your_shell/hold_your_shell.py

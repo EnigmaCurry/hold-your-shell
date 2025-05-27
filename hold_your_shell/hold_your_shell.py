@@ -9,9 +9,10 @@ import argparse
 import tempfile
 import termios
 
+TABS = ["Script Preview", "Env Vars"]
 
-def main(stdscr, header_lines, display_text, interpreter):
-    # initialize curses modes and colors
+
+def main(stdscr, display_text, env_vars_text, interpreter):
     curses.curs_set(0)
     curses.noecho()
     curses.cbreak()
@@ -21,59 +22,65 @@ def main(stdscr, header_lines, display_text, interpreter):
         curses.init_color(curses.COLOR_BLACK, 0, 0, 0)
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
     stdscr.bkgd(" ", curses.color_pair(1))
-    stdscr.clear()
 
-    # get terminal size
     height, width = stdscr.getmaxyx()
-    # wrap and draw header lines with 1-col margin
-    wrapped_header = []
-    for h in header_lines:
-        wrapped_header.extend(textwrap.wrap(h, width - 4) or [h])
-    header_height = len(wrapped_header)
-
-    # define pager box coordinates with 1-tile margin
-    top = header_height + 1
+    top = 2
     left = 1
     right = width - 2
-    bottom = height - 2  # leave last line for prompt
-    # content area inside box
+    bottom = height - 2
     content_height = bottom - top - 1
     content_width = right - left - 1
 
-    # prepare display lines wrapped to content_width
-    lines = []
-    for line in display_text.splitlines() or [""]:
-        lines.extend(textwrap.wrap(line, content_width) or [""])
-    max_offset = max(len(lines) - content_height, 0)
+    tab_index = 0
     offset = 0
-
     options = ["Yes", "No"]
-    selection = 1  # default No
+    selection = 1
     prompt = "Do you want to run this script?"
+
+    def get_lines():
+        text = display_text if tab_index == 0 else env_vars_text
+        lines = []
+        for line in text.splitlines() or [""]:
+            lines.extend(textwrap.wrap(line, content_width) or [""])
+        return lines
+
+    lines = get_lines()
+    max_offset = max(len(lines) - content_height, 0)
 
     while True:
         stdscr.erase()
-        # draw header with margin
-        for i, hline in enumerate(wrapped_header):
-            stdscr.addstr(i + 1, 2, hline)
-        # draw box border
+
+        # draw tabs
+        x = 2
+        for i, tab in enumerate(TABS):
+            if i == tab_index:
+                stdscr.attron(curses.A_REVERSE)
+            stdscr.addstr(1, x, f" {tab} ")
+            if i == tab_index:
+                stdscr.attroff(curses.A_REVERSE)
+            x += len(tab) + 3
+        # stdscr.addstr(1, x, "(press TAB)")
+
+        # draw box
         stdscr.addch(top, left, curses.ACS_ULCORNER)
         stdscr.addch(top, right, curses.ACS_URCORNER)
         stdscr.addch(bottom, left, curses.ACS_LLCORNER)
         stdscr.addch(bottom, right, curses.ACS_LRCORNER)
-        # horizontal lines
         stdscr.hline(top, left + 1, curses.ACS_HLINE, content_width)
         stdscr.hline(bottom, left + 1, curses.ACS_HLINE, content_width)
-        # vertical lines
         for y in range(top + 1, bottom):
             stdscr.addch(y, left, curses.ACS_VLINE)
             stdscr.addch(y, right, curses.ACS_VLINE)
-        # display content inside box
+
+        # display content
+        lines = get_lines()
+        max_offset = max(len(lines) - content_height, 0)
         for i in range(content_height):
             idx = offset + i
             if idx < len(lines):
                 stdscr.addstr(top + 1 + i, left + 1, lines[idx])
-        # draw prompt and options
+
+        # prompt
         stdscr.addstr(height - 1, 1, prompt)
         x = len(prompt) + 3
         for idx, opt in enumerate(options):
@@ -83,6 +90,7 @@ def main(stdscr, header_lines, display_text, interpreter):
             if idx == selection:
                 stdscr.attroff(curses.A_REVERSE)
             x += len(opt) + 4
+
         stdscr.refresh()
 
         key = stdscr.getch()
@@ -98,22 +106,21 @@ def main(stdscr, header_lines, display_text, interpreter):
             selection = max(0, selection - 1)
         elif key in (curses.KEY_RIGHT, ord("l")):
             selection = min(len(options) - 1, selection + 1)
+        elif key == 9:  # Tab
+            tab_index = (tab_index + 1) % len(TABS)
+            offset = 0
         elif key in (curses.KEY_ENTER, 10, 13):
             return options[selection]
+        elif key in (27, ord("q")):
+            return "No"
 
 
 def run():
     parser = argparse.ArgumentParser(
         description="Preview a script from stdin and confirm before running it."
     )
-    parser.add_argument(
-        "--header",
-        help="Optional header text above the pager",
-        default="Script preview:",
-    )
     args = parser.parse_args()
 
-    # read script from stdin
     if sys.stdin.isatty():
         parser.print_help(sys.stderr)
         sys.exit(1)
@@ -123,7 +130,6 @@ def run():
         print("Error: no script provided on stdin.", file=sys.stderr)
         sys.exit(1)
 
-    # detect shebang or default
     lines = script_text.splitlines()
     if lines and lines[0].startswith("#!"):
         shebang = lines[0][2:].strip()
@@ -133,9 +139,8 @@ def run():
         interpreter = [os.getenv("SHELL", "/bin/bash")]
         display_text = f"#!{interpreter[0]}\n" + script_text
 
-    header_lines = args.header.splitlines() if args.header else []
+    env_vars_text = "\n".join(f"{k}={v}" for k, v in os.environ.items())
 
-    # redirect stdio to tty for curses
     try:
         fd = os.open("/dev/tty", os.O_RDWR)
         os.dup2(fd, 0)
@@ -144,16 +149,13 @@ def run():
     except OSError:
         pass
 
-    # launch TUI
     try:
-        choice = curses.wrapper(main, header_lines, display_text, interpreter)
+        choice = curses.wrapper(main, display_text, env_vars_text, interpreter)
     except Exception:
         curses.endwin()
         raise
 
-    # execute or cancel
     if choice == "Yes":
-        # write the script to a temp file to allow interactive input
         with tempfile.NamedTemporaryFile(
             delete=False, mode="w", prefix="hyscript_", suffix=".sh"
         ) as tf:
