@@ -130,8 +130,8 @@ def run():
         interpreter = shlex.split(shebang)
         display_text = script_text
     else:
-        interpreter = ["/bin/bash"]
-        display_text = "#!/bin/bash\n" + script_text
+        interpreter = [os.getenv("SHELL", "/bin/bash")]
+        display_text = f"#!{interpreter[0]}\n" + script_text
 
     header_lines = args.header.splitlines() if args.header else []
 
