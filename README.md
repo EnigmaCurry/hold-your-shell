@@ -7,6 +7,8 @@ confirm execution.
 This single file program is written for Python 3.x and only uses the
 stdlib.
 
+![image](https://github.com/user-attachments/assets/1ae6b8fb-ed71-480f-ac80-aacce8b1ecba)
+
 ## Install
 
 Pip install:
