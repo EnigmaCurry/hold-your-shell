@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "hold-your-shell"
 version = "0.1.0"
-description = "Preview and coinfirm shell scripts before execution."
+description = "Preview and confirm shell scripts before executing them."
 authors = ["EnigmaCurry <ryan@enigmacurry.com>"]
 license = "MIT"
 readme = "README.md"
