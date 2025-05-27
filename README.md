@@ -7,7 +7,7 @@ confirm execution.
 This single file program is written for Python 3.x and only uses the
 stdlib.
 
-![image](https://github.com/user-attachments/assets/b7ac2a36-b97d-4c96-b33e-f0d2bfbfde3b)
+![image](https://github.com/user-attachments/assets/2f0c2411-1de6-48ef-a1e2-b4984367e558)
 
 ## Install
 
