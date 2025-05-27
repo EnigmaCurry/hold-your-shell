@@ -163,6 +163,9 @@ def run():
         try:
             subprocess.run("reset")
             subprocess.run(interpreter + [tf_path], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error: exit code {e.returncode}", file=sys.stderr)
+            sys.exit(1)
         finally:
             os.unlink(tf_path)
         sys.exit(0)
