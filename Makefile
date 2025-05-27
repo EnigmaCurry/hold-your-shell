@@ -15,3 +15,6 @@ deps:
 build: deps
 	uv build
 
+.PHONY: publish # Publish package
+publish: build
+	uv publish
