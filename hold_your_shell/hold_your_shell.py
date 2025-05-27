@@ -104,7 +104,7 @@ def main(stdscr, header_lines, display_text, interpreter):
 
 def run():
     parser = argparse.ArgumentParser(
-        description="Preview a script in a bordered pager and confirm before running."
+        description="Preview a script from stdin and confirm before running it."
     )
     parser.add_argument(
         "--header",
@@ -115,10 +115,7 @@ def run():
 
     # read script from stdin
     if sys.stdin.isatty():
-        print(
-            "Error: this tool expects a script via stdin; please pipe a script.",
-            file=sys.stderr,
-        )
+        parser.print_help(sys.stderr)
         sys.exit(1)
 
     script_text = sys.stdin.read()
