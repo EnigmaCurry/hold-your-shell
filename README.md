@@ -28,6 +28,16 @@ wget -O ${HY_BIN} https://raw.githubusercontent.com/EnigmaCurry/hold-your-shell/
 chmod +x ${HY_BIN}
 ```
 
+## Usage
+
+ * Pipe any script to the stdin of `hold-your-shell`.
+ * The script will be previewed on the first tab shown: `Script Preview`.
+ * Press TAB to cycle through the other tabs, including `Env Vars`.
+ * Use the up and down arrow keys (or `j` and `k`) to scroll the text.
+ * After reviewing the script and env vars, choose whether or not you
+   you want to run the script. Using the left or right arrows, select
+   `Yes` or `No`. Press Enter to confirm your selection.
+
 ## Examples
 
 ```
