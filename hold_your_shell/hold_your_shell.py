@@ -9,7 +9,7 @@ import argparse
 import tempfile
 import termios
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 TABS = ["Script Preview", "Env Vars"]
 
