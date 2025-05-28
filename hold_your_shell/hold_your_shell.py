@@ -9,6 +9,8 @@ import argparse
 import tempfile
 import termios
 
+__version__ = "0.1.3"
+
 TABS = ["Script Preview", "Env Vars"]
 
 
@@ -117,19 +119,57 @@ def main(stdscr, display_text, env_vars_text, interpreter):
 
 def run():
     parser = argparse.ArgumentParser(
-        description="Preview a script from stdin and confirm before running it."
+        description="Preview a script and confirm before running it."
     )
+    parser.add_argument(
+        "input",
+        nargs="?",
+        default="-",
+        metavar="INPUT",
+        help="Path to script file, or '-' (default) to read from stdin.",
+    )
+    parser.add_argument(
+        "-l",
+        "--linger",
+        action="store_true",
+        help="After script runs, wait for keypress before exiting.",
+    )
+    parser.add_argument(
+        "-c",
+        "--consume",
+        action="store_true",
+        help="Delete the input file after reading it (only if INPUT is a file).",
+    )
+
     args = parser.parse_args()
 
-    if sys.stdin.isatty():
-        parser.print_help(sys.stderr)
-        sys.exit(1)
+    # Validate --consume usage
+    if args.consume:
+        if args.input == "-" or not os.path.isfile(args.input):
+            print("Error: --consume requires a valid input file", file=sys.stderr)
+            sys.exit(1)
 
-    script_text = sys.stdin.read()
+    # Read script
+    if args.input == "-":
+        if sys.stdin.isatty():
+            parser.print_help(sys.stderr)
+            sys.exit(1)
+        script_text = sys.stdin.read()
+    else:
+        try:
+            with open(args.input, "r") as f:
+                script_text = f.read()
+            if args.consume:
+                os.unlink(args.input)
+        except Exception as e:
+            print(f"Error reading input file: {e}", file=sys.stderr)
+            sys.exit(1)
+
     if not script_text.strip():
-        print("Error: no script provided on stdin.", file=sys.stderr)
+        print("Error: no script provided.", file=sys.stderr)
         sys.exit(1)
 
+    # Determine interpreter
     lines = script_text.splitlines()
     if lines and lines[0].startswith("#!"):
         shebang = lines[0][2:].strip()
@@ -167,9 +207,13 @@ def run():
             subprocess.run(interpreter + [tf_path], check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error: exit code {e.returncode}", file=sys.stderr)
+            if args.linger:
+                input("\n[Script failed.]\n[Press Enter when done.]\n")
             sys.exit(1)
         finally:
             os.unlink(tf_path)
+        if args.linger:
+            input("\n[Script finished.]\n[Press Enter when done.]\n")
         sys.exit(0)
     else:
         print("Cancelled.")

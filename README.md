@@ -40,9 +40,16 @@ chmod +x ${HY_BIN}
 
 ## Examples
 
+### Read from stdin
+
 ```
 echo "whoami" | hold-your-shell
 ```
+
+```
+echo -e '#!/bin/python\nprint("Hello from Python!")' | hold-your-shell
+```
+
 
 ```
 cat <<'EOF' | hold-your-shell
@@ -55,3 +62,30 @@ EOF
 ```
 curl https://get.docker.com/ | hold-your-shell
 ```
+
+### Read from file
+
+```
+cat <<EOF > test.txt
+#!/bin/env python
+print("Hello from Python!")
+EOF
+
+hold-your-shell --consume test.txt
+```
+
+`--consume` will **delete** the input file immediately after it reads
+it.
+
+### Linger
+
+```
+echo whoami | hold-your-shell --linger
+```
+
+`--linger` will have the program remain running after completion of
+the script until a key is pressed.
+
+## Development
+
+See [DEVELOPMENT.md](DEVELOPMENT.md)
