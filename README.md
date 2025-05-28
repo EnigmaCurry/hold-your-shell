@@ -33,11 +33,15 @@ chmod +x ${HY_BIN}
  * Pipe any script to the stdin of `hold-your-shell`.
  * The script will be previewed on the first tab shown: `Script Preview`.
  * Press TAB to cycle through the other tabs, including `Env Vars`.
- * Use the up and down arrow keys (or `j` and `k`) to scroll the text.
- * After reviewing the script and env vars, choose whether or not you
-   you want to run the script. Using the left or right arrows, select
-   `Yes` or `No`. Press Enter to confirm your selection.
-
+ * Use the up, down, PgUp, PgDown, `j`, or `k` keys to scroll the
+   text.
+ * Use the left, right, `h`, or `l` keys to select the action and
+   press `Enter` to confirm.
+   * Choose `Yes` to run the script.
+   * Choose `No` to cancel and quit (default).
+   * Choose `Edit` to open the script in your preferred `$EDITOR`,
+     allowing you to customize it before running it.
+ 
 ## Examples
 
 ### Read from stdin
